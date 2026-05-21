@@ -10,17 +10,22 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Pressable,
 } from 'react-native';
 
 export default function App() {
 
   const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [userId, setUserId] = useState('');
+
+  const [filterUserId, setFilterUserId] = useState('');
 
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -42,6 +47,7 @@ export default function App() {
       const data = await response.json();
 
       setPosts(data);
+      setFilteredPosts(data);
 
     } catch (err) {
 
@@ -114,23 +120,70 @@ export default function App() {
     }
   };
 
+  const filterPosts = () => {
+
+    if (filterUserId.trim() === '') {
+
+      setFilteredPosts(posts);
+      return;
+    }
+
+    const filtered = posts.filter(
+      (post) =>
+        String(post.userId) === filterUserId.trim()
+    );
+
+    setFilteredPosts(filtered);
+  };
+
+  const showPostDetails = (post) => {
+
+    Alert.alert(
+      'Post Details',
+      `ID: ${post.id}
+
+User ID: ${post.userId}
+
+Title:
+${post.title}
+
+Body:
+${post.body}`
+    );
+  };
+
   const renderItem = ({ item }) => (
 
-    <View style={styles.card}>
+    <Pressable
+      style={({ pressed }) => [
+        {
+          opacity: pressed ? 0.7 : 1,
+        }
+      ]}
+      onPress={() => showPostDetails(item)}
+    >
 
-      <Text style={styles.postId}>
-        Post ID: {item.id}
-      </Text>
+      <View style={styles.card}>
 
-      <Text style={styles.postTitle}>
-        {item.title}
-      </Text>
+        <Text style={styles.postId}>
+          User ID: {item.userId}
+        </Text>
 
-      <Text style={styles.postBody}>
-        {item.body}
-      </Text>
+        <Text style={styles.postTitle}>
+          {item.title}
+        </Text>
 
-    </View>
+        <Text style={styles.postBody}>
+          {item.body}
+        </Text>
+
+        <Text style={styles.tapText}>
+          Tap to view details
+        </Text>
+
+      </View>
+
+    </Pressable>
   );
 
   if (loading) {
@@ -183,7 +236,7 @@ export default function App() {
             </Text>
 
             <Text style={styles.subHeading}>
-              Fetching and creating posts
+              Fetching, filtering, and creating posts
             </Text>
 
             <View style={styles.formContainer}>
@@ -228,6 +281,35 @@ export default function App() {
 
             </View>
 
+            <View style={styles.formContainer}>
+
+              <Text style={styles.formTitle}>
+                Filter Posts
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter User ID"
+                value={filterUserId}
+                onChangeText={setFilterUserId}
+                keyboardType="numeric"
+              />
+
+              <Button
+                title="Filter"
+                onPress={filterPosts}
+              />
+
+              <Button
+                title="Reset Filter"
+                onPress={() => {
+                  setFilterUserId('');
+                  setFilteredPosts(posts);
+                }}
+              />
+
+            </View>
+
             <Text style={styles.listTitle}>
               Posts List
             </Text>
@@ -235,7 +317,7 @@ export default function App() {
           </View>
         }
 
-        data={posts}
+        data={filteredPosts}
 
         keyExtractor={(item) => item.id.toString()}
 
@@ -339,6 +421,12 @@ const styles = StyleSheet.create({
   successText: {
     color: 'green',
     marginTop: 12,
+    fontWeight: '600',
+  },
+
+  tapText: {
+    marginTop: 10,
+    color: '#007AFF',
     fontWeight: '600',
   },
 
